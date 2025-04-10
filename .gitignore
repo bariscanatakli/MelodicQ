@@ -1,0 +1,50 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Model checkpoints and saved models
+models/
+*.pth
+*.pt
+*.h5
+
+# Logs and training data
+logs/
+runs/
+tensorboard/
+*.log
+
+# Data files (uncomment if you don't want to include your dataset)
+data/tracks_features.csv
+# *.csv
+# *.json
+
+# Saved Models
+saved_models/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# VSCode
+.vscode/
+
+# PyCharm
+.idea/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
