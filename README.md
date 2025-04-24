@@ -38,6 +38,9 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
+
+# Verify GPU availability (optional)
+python -c "import torch; print('CUDA available:', torch.cuda.is_available()); print('Device name:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'No GPU')"
 ```
 
 ## Usage
@@ -47,6 +50,15 @@ pip install -r requirements.txt
 ```bash
 python main.py --train --data_path data/tracks_features.csv
 ```
+
+# GPU Acceleration
+
+MelodicQ automatically uses GPU acceleration when available. The DQN agent checks for CUDA availability and uses your GPU for faster training. No additional configuration is needed.
+
+To get the best performance:
+- Ensure you have the latest NVIDIA drivers installed
+- Keep your PyTorch version updated
+- For large datasets, consider increasing batch sizes to better utilize GPU memory
 
 ### Evaluation
 

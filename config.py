@@ -7,7 +7,7 @@ class Config:
     LOG_DIR = "logs"
     
     # Data preprocessing
-    SAMPLE_SIZE = 100000  # Number of songs to sample from dataset
+    SAMPLE_SIZE = 300000  # Number of songs to sample from dataset
     RANDOM_SEED = 42
     
     # Feature columns to use

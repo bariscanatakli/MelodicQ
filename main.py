@@ -10,7 +10,7 @@ from model.dqn_agent import DQNAgent
 from environment.music_env import MusicRecommendationEnv
 from training.train import train_dqn
 from evaluation.evaluate import evaluate_agent, visualize_evaluation
-from utils.utils import set_seeds, plot_song_features, analyze_recommendations
+from utils.utils import set_seeds, plot_song_features, analyze_recommendations, get_optimal_batch_size
 from config import Config
 
 def main(args):
@@ -42,6 +42,13 @@ def main(args):
     print(f"State dimension: {env.state_dim}")
     print(f"Action dimension: {env.action_space}")
     
+    # Calculate optimal batch size for GPU if requested
+    batch_size = Config.BATCH_SIZE
+    if args.optimize_batch_size and torch.cuda.is_available():
+        optimal_batch_size = get_optimal_batch_size(env.state_dim)
+        print(f"Optimal batch size for GPU: {optimal_batch_size}")
+        batch_size = optimal_batch_size
+    
     # Create agent
     agent = DQNAgent(
         state_dim=env.state_dim,
@@ -53,12 +60,15 @@ def main(args):
         epsilon_min=Config.EPSILON_MIN,
         epsilon_decay=Config.EPSILON_DECAY,
         memory_size=Config.MEMORY_SIZE,
-        batch_size=Config.BATCH_SIZE
+        batch_size=batch_size
     )
     
     # Print agent details
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Agent created with DQN running on {device}")
+    if device == "cuda":
+        print(f"GPU: {torch.cuda.get_device_name(0)}")
+    print(f"Batch size: {agent.batch_size}")
     print(f"Epsilon: {agent.epsilon} (min: {agent.epsilon_min}, decay: {agent.epsilon_decay})")
     
     # Training
@@ -71,7 +81,8 @@ def main(args):
             target_update_freq=Config.TARGET_UPDATE_FREQ,
             eval_freq=Config.EVAL_FREQ,
             save_dir=Config.MODEL_SAVE_DIR,
-            log_dir=Config.LOG_DIR
+            log_dir=Config.LOG_DIR,
+            enable_gpu_monitoring=not args.disable_gpu_monitoring
         )
         print("Training completed!")
     
@@ -130,6 +141,17 @@ if __name__ == "__main__":
                         help="Path to a saved model for evaluation")
     parser.add_argument("--visualize", action="store_true",
                         help="Visualize sample data")
+    parser.add_argument("--optimize_batch_size", action="store_true",
+                        help="Optimize batch size based on GPU memory")
+    parser.add_argument("--disable_gpu_monitoring", action="store_true",
+                        help="Disable GPU monitoring during training")
+    parser.add_argument('--num_episodes', type=int, default=1000, help='Number of episodes for training')
+    parser.add_argument('--sample_size', type=int, default=100000, help='Number of songs to sample (smaller is faster)')
+    parser.add_argument('--batch_size', type=int, default=64, help='Batch size for training')
+    parser.add_argument('--memory_size', type=int, default=20000, help='Replay memory size')
+    parser.add_argument('--epsilon_decay', type=float, default=0.995, help='Epsilon decay rate')
+    parser.add_argument('--early_stopping', action='store_true', help='Enable early stopping')
+    parser.add_argument('--patience', type=int, default=50, help='Patience for early stopping')
     
     args = parser.parse_args()
     
