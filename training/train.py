@@ -6,6 +6,7 @@ from tqdm import tqdm
 import pandas as pd
 import matplotlib.pyplot as plt
 from utils.utils import plot_rewards, monitor_gpu_usage, log_gpu_usage, get_optimal_batch_size
+from model.rainbow_agent import RainbowAgent, DEFAULT_CFG
 
 def train_dqn(agent, env, num_episodes=1000, target_update_freq=10, eval_freq=100, 
               save_dir='saved_models', log_dir='logs', enable_gpu_monitoring=True,
@@ -59,22 +60,24 @@ def train_dqn(agent, env, num_episodes=1000, target_update_freq=10, eval_freq=10
         
         while not done and step_count < max_steps_per_episode:
             # Select action
-            action = agent.act(state)
+            action = agent.select_action(state)
             
             # Take action
             next_state, reward, done, _ = env.step(action)
             
             # Store experience
-            agent.remember(state, action, reward, next_state, done)
+            agent.store_transition(state, action, reward, next_state, done)
             
             # Update state and total reward
             state = next_state
             total_reward += reward
             
             # Train the agent (only every few steps for very large action spaces)
-            if len(agent.memory) >= agent.batch_size:
+            if len(agent.buffer) >= agent.batch_size:
                 if agent.action_dim <= 10000 or step_count % 5 == 0:  # Reduce frequency for large action spaces
-                    agent.replay()
+                    result = agent.train_step()
+                    if result:
+                        print(f"Loss: {result['loss']:.4f}, TD Error: {result['td_error']:.4f}")
             
             step_count += 1
             
@@ -85,7 +88,7 @@ def train_dqn(agent, env, num_episodes=1000, target_update_freq=10, eval_freq=10
         
         # Update target network periodically
         if episode % target_update_freq == 0:
-            agent.update_target_network()
+            agent.soft_update()
         
         # Save episode reward
         episode_rewards.append(total_reward)
@@ -126,7 +129,6 @@ def train_dqn(agent, env, num_episodes=1000, target_update_freq=10, eval_freq=10
             elapsed_time = time.time() - start_time
             print(f"\nEpisode {episode}/{num_episodes}")
             print(f"Avg Reward (last 100): {avg_rewards[-1]:.4f}")
-            print(f"Epsilon: {agent.epsilon:.4f}")
             print(f"Time Elapsed: {elapsed_time:.2f} seconds")
             
             # Log GPU status during evaluation

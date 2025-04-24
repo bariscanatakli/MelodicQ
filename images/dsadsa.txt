@@ -1,0 +1,50 @@
+**Title: Rainbow DQN Model Architecture – Music Recommendation System**
+
+---
+
+**Overview**
+This diagram shows the architecture of the Rainbow DQN agent used in my music recommendation system. The model is designed to make decisions based on song features, such as valence, tempo, and danceability.
+
+---
+
+**Input Layer**
+- The input represents the current state, which is a vector of features from selected songs.
+
+**Fully Connected Layer (ReLU)**
+- A linear layer processes the input state.
+- A ReLU activation adds non-linearity.
+
+---
+
+**Two Branches: Value Stream & Advantage Stream**
+
+**1. Value Stream**
+- Uses a NoisyLinear layer followed by ReLU.
+- Estimates the overall value of being in a given state: **V(s)**.
+
+**2. Advantage Stream**
+- Also uses NoisyLinear and ReLU.
+- Calculates the advantage of each possible action (song): **A(s, a)**.
+
+---
+
+**Combining the Streams**
+- The final Q-value is calculated using:
+
+  **Q(s, a) = V(s) + (A(s, a) - mean(A(s, ·)))**
+
+- This helps to distinguish the value of the state from the importance of each action.
+
+---
+
+**Why Rainbow DQN?**
+- Combines several improvements over classic DQN:
+  - **Noisy Networks**: Better exploration
+  - **Dueling Architecture**: Better value-action separation
+  - **Prioritized Replay**: More efficient learning from important experiences
+
+---
+
+**Conclusion**
+This architecture enables the agent to learn effective music recommendations by analyzing patterns in song features and predicting which songs are most likely to be rewarding.
+

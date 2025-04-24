@@ -20,7 +20,7 @@ models/
 *.h5
 
 # Logs and training data
-logs/
+
 runs/
 tensorboard/
 *.log

@@ -50,53 +50,33 @@ def plot_song_features(data, feature_cols, n_songs=10):
     plt.tight_layout()
     plt.show()
 
+
 def analyze_recommendations(recommended_songs, songs_data):
-    """
-    Analyze the diversity and patterns in recommended songs
-    
-    Args:
-        recommended_songs (list): List of recommended song IDs per episode
-        songs_data (DataFrame): Songs data
-        
-    Returns:
-        dict: Analysis results
-    """
-    # Flatten the list of recommendations
-    all_recommendations = [song for episode in recommended_songs for song in episode]
-    
-    # Count unique songs
-    unique_songs = set([song[0] for song in all_recommendations])
-    
-    # Get most recommended songs
-    song_counts = {}
-    for song_id, song_name in all_recommendations:
-        if song_id in song_counts:
-            song_counts[song_id] += 1
-        else:
-            song_counts[song_id] = 1
-    
-    # Sort by count
-    most_recommended = sorted(
-        [(song_id, count) for song_id, count in song_counts.items()],
-        key=lambda x: x[1],
-        reverse=True
-    )[:10]
-    
-    # Convert to readable format
-    most_recommended_info = []
-    for song_id, count in most_recommended:
-        song_info = songs_data[songs_data['id'] == song_id]
-        if not song_info.empty:
-            name = song_info.iloc[0]['name']
-            artists = song_info.iloc[0]['artists']
-            most_recommended_info.append((song_id, name, artists, count))
-    
-    return {
-        'total_recommendations': len(all_recommendations),
-        'unique_songs': len(unique_songs),
-        'diversity_ratio': len(unique_songs) / len(all_recommendations),
-        'most_recommended': most_recommended_info
+    from collections import Counter
+
+    # Sadece id ve isim alınır (ilk 2 eleman)
+    all_recommendations = [s[:2] for s in recommended_songs]
+
+    # Her şarkıdan kaçar defa önerildiğini say
+    counter = Counter(all_recommendations)
+    most_common = counter.most_common(10)
+
+    unique_songs = len(counter)
+    total = len(all_recommendations)
+    diversity_ratio = unique_songs / total if total > 0 else 0.0
+
+    result = {
+        "total_recommendations": total,
+        "unique_songs": unique_songs,
+        "diversity_ratio": diversity_ratio,
+        "most_recommended": [
+            (sid, name, songs_data[songs_data["id"] == sid]["artists"].values[0], count)
+            for ((sid, name), count) in most_common
+        ]
     }
+
+    return result
+
 
 def plot_rewards(rewards, filepath):
     """

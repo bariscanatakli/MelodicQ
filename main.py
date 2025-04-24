@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 from data.data_loader import load_data
 from data.preprocess import preprocess_data
-from model.dqn_agent import DQNAgent
+from model.rainbow_agent import RainbowAgent, DEFAULT_CFG     # DQNAgent yerine!
 from environment.music_env import MusicRecommendationEnv
 from training.train import train_dqn
 from evaluation.evaluate import evaluate_agent, visualize_evaluation
@@ -43,25 +43,25 @@ def main(args):
     print(f"Action dimension: {env.action_space}")
     
     # Calculate optimal batch size for GPU if requested
+    
     batch_size = Config.BATCH_SIZE
     if args.optimize_batch_size and torch.cuda.is_available():
-        optimal_batch_size = get_optimal_batch_size(env.state_dim)
-        print(f"Optimal batch size for GPU: {optimal_batch_size}")
-        batch_size = optimal_batch_size
-    
-    # Create agent
-    agent = DQNAgent(
+        batch_size = get_optimal_batch_size(env.state_dim)
+
+    cfg = DEFAULT_CFG.copy()
+    cfg["batch_size"] = batch_size
+    cfg["device"] = "cuda" if torch.cuda.is_available() else "cpu"
+    cfg["buffer_size"] = args.memory_size
+
+    # ---- Agent ----
+    agent = RainbowAgent(
         state_dim=env.state_dim,
         action_dim=env.action_space,
-        hidden_dim=Config.HIDDEN_DIM,
-        lr=Config.LEARNING_RATE,
-        gamma=Config.GAMMA,
-        epsilon=Config.EPSILON,
-        epsilon_min=Config.EPSILON_MIN,
-        epsilon_decay=Config.EPSILON_DECAY,
-        memory_size=Config.MEMORY_SIZE,
-        batch_size=batch_size
+        cfg=cfg
     )
+
+    print(f"Agent created (Rainbow) running on {cfg['device']}")
+    print(f"Batch size: {agent.batch_size}")
     
     # Print agent details
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -69,7 +69,7 @@ def main(args):
     if device == "cuda":
         print(f"GPU: {torch.cuda.get_device_name(0)}")
     print(f"Batch size: {agent.batch_size}")
-    print(f"Epsilon: {agent.epsilon} (min: {agent.epsilon_min}, decay: {agent.epsilon_decay})")
+    # print(f"Epsilon: {agent.epsilon} (min: {agent.epsilon_min}, decay: {agent.epsilon_decay})")
     
     # Training
     if args.train:
